@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price Tracker PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">PRICE<span>TRACKER</span> PRO</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Ingresar</button>
+      <button class="auth-tab" onclick="switchTab('register')">Registrarse</button>
+    </div>
+
+    <div id="tab-login">
+      <div class="field-wrap">
+        <input id="login-email" type="email" placeholder="Email" autocomplete="email">
+      </div>
+      <div class="field-wrap">
+        <input id="login-password" type="password" placeholder="Contraseña" autocomplete="current-password">
+      </div>
+      <div id="login-error" class="auth-error"></div>
+      <button class="auth-btn" onclick="doLogin()">
+        <span class="btn-text">INGRESAR</span>
+        <span class="spinner" id="login-spinner"></span>
+      </button>
+      <p class="auth-hint">Demo: registrate primero con cualquier email/contraseña.</p>
+    </div>
+
+    <div id="tab-register" style="display:none;">
+      <div class="field-wrap">
+        <input id="reg-email" type="email" placeholder="Email">
+      </div>
+      <div class="field-wrap">
+        <input id="reg-username" type="text" placeholder="Usuario">
+      </div>
+      <div class="field-wrap">
+        <input id="reg-password" type="password" placeholder="Contraseña (mín. 6 chars)">
+      </div>
+      <div id="reg-error" class="auth-error"></div>
+      <button class="auth-btn" onclick="doRegister()">
+        <span class="btn-text">CREAR CUENTA</span>
+        <span class="spinner" id="reg-spinner"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+
+  <header>
+    <div class="logo"><span class="status-dot"></span>PRICE<span>TRACKER</span> PRO</div>
+    <div class="header-right">
+      <span id="username-label" class="username-label"></span>
+      <button class="logout-btn" onclick="logout()">Salir</button>
+    </div>
+  </header>
+
+  <div id="toast-container"></div>
+
+  <div class="main">
+
+    <!-- ADD PRODUCT -->
+    <div class="add-panel">
+      <h2>// agregar producto</h2>
+      <div class="add-row">
+        <div class="input-wrap" id="url-wrap">
+          <input id="url-input" type="text" placeholder="https://tienda.com/producto">
+          <div class="err-msg">Ingresá una URL válida (debe empezar con http)</div>
+        </div>
+        <div class="input-wrap" style="max-width:200px;">
+          <input id="name-input" type="text" placeholder="Nombre (opcional)">
+        </div>
+        <div class="price-input-wrap">
+          <input id="alert-input" type="number" placeholder="Alerta si baja de..." min="0" step="0.01">
+        </div>
+        <button class="track-btn" id="track-btn" onclick="addProduct()">
+          <span class="spinner" id="track-spinner" style="display:none;"></span>
+          <span class="btn-text">TRACK</span>
+        </button>
+      </div>
+      <p class="scrape-note">⚡ El precio se obtiene en tiempo real al agregar. Actualización automática cada hora.</p>
+    </div>
+
+    <!-- STATS -->
+    <div class="grid" id="stats-grid" style="display:none;">
+      <div class="stat-card">
+        <div class="label">Productos trackeados</div>
+        <div class="value" id="stat-count">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Mejor caída</div>
+        <div class="value green" id="stat-best">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Ahorro total acumulado</div>
+        <div class="value green" id="stat-savings">$0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Última actualización</div>
+        <div class="value" id="stat-updated" style="font-size:16px;">—</div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card">
+      <div class="card-header">
+        <h3>// productos monitoreados</h3>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span class="badge" id="count-badge">0 productos</span>
+          <button class="refresh-all-btn" onclick="refreshAll()" title="Actualizar todos ahora">↻ Actualizar</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div id="empty-state" class="empty-state">
+          <div class="icon">📦</div>
+          <div>Todavía no trackeás ningún producto.</div>
+          <div style="margin-top:6px;opacity:.6;">Pegá una URL arriba para empezar.</div>
+        </div>
+        <table id="products-table" style="display:none;">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Precio actual</th>
+              <th>Cambio</th>
+              <th>Mín histórico</th>
+              <th>Alerta</th>
+              <th>Actualizar</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CHART -->
+    <div class="card">
+      <div class="card-header">
+        <h3>// historial de precios</h3>
+      </div>
+      <div class="chart-controls" id="chart-controls"></div>
+      <div class="chart-container">
+        <div id="no-data-chart" class="no-data-chart">Agregá un producto para ver el historial</div>
+        <canvas id="chart" style="display:none;"></canvas>
+      </div>
+    </div>
+
+  </div>
+  <footer>PRICE TRACKER PRO — DATOS REALES VÍA SCRAPING — <span id="api-status">API OK</span></footer>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
