@@ -16,8 +16,8 @@ JS_HEAVY_DOMAINS = [
 
 
 def needs_selenium(url: str) -> bool:
-    return any(d in url.lower() for d in JS_HEAVY_DOMAINS)
-
+    return False
+```
 
 def scrape_product(url: str) -> ScrapeResult:
     """
