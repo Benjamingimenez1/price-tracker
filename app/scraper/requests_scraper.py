@@ -1,70 +1,47 @@
-import logging
-import time
-import random
 import requests
-from app.scraper.base import BaseScraper, ScrapeResult
-from app.scraper.headers import get_headers
-from app.scraper.parsers import parse_page
+from bs4 import BeautifulSoup
+from app.scraper.base import ScrapeResult
 
-logger = logging.getLogger(__name__)
-
-TIMEOUT = 15
-MAX_RETRIES = 3
-
-
-class RequestsScraper(BaseScraper):
+class RequestsScraper:
     def scrape(self, url: str) -> ScrapeResult:
-        for attempt in range(1, MAX_RETRIES + 1):
-            try:
-                logger.info(f"[requests] Attempt {attempt} → {url}")
-                session = requests.Session()
-                session.headers.update(get_headers(url))
+        try:
+            headers = {
+                "User-Agent": "Mozilla/5.0"
+            }
 
-                # Small random delay to be polite
-                time.sleep(random.uniform(0.5, 1.5))
+            response = requests.get(url, headers=headers, timeout=10)
 
-                resp = session.get(url, timeout=TIMEOUT, allow_redirects=True)
-                resp.raise_for_status()
-
-                data = parse_page(url, resp.text)
-
-                if not data.get("price"):
-                    logger.warning(f"[requests] No price found on attempt {attempt}")
-                    if attempt < MAX_RETRIES:
-                        time.sleep(2 ** attempt)
-                        continue
-                    return ScrapeResult(
-                        success=False,
-                        error="No se encontró precio en la página",
-                        method="requests"
-                    )
-
+            if response.status_code != 200:
                 return ScrapeResult(
-                    success=True,
-                    price=data["price"],
-                    name=data.get("name"),
-                    method="requests"
+                    success=False,
+                    error=f"Error HTTP {response.status_code}"
                 )
 
-            except requests.exceptions.HTTPError as e:
-                logger.error(f"[requests] HTTP error: {e}")
-                return ScrapeResult(success=False, error=f"HTTP {e.response.status_code}", method="requests")
+            soup = BeautifulSoup(response.text, "html.parser")
 
-            except requests.exceptions.ConnectionError as e:
-                logger.error(f"[requests] Connection error: {e}")
-                if attempt < MAX_RETRIES:
-                    time.sleep(2 ** attempt)
-                    continue
-                return ScrapeResult(success=False, error="Error de conexión", method="requests")
+            # 📌 PRECIO (books.toscrape)
+            price_element = soup.select_one(".price_color")
 
-            except requests.exceptions.Timeout:
-                logger.error(f"[requests] Timeout on attempt {attempt}")
-                if attempt < MAX_RETRIES:
-                    continue
-                return ScrapeResult(success=False, error="Timeout al cargar la página", method="requests")
+            if not price_element:
+                return ScrapeResult(
+                    success=False,
+                    error="No se encontró precio en la página"
+                )
 
-            except Exception as e:
-                logger.exception(f"[requests] Unexpected error: {e}")
-                return ScrapeResult(success=False, error=str(e), method="requests")
+            price = price_element.text.strip()
 
-        return ScrapeResult(success=False, error="Máximo de reintentos alcanzado", method="requests")
+            # 📌 TÍTULO
+            title_element = soup.select_one("h1")
+            title = title_element.text.strip() if title_element else "Sin título"
+
+            return ScrapeResult(
+                success=True,
+                price=price,
+                title=title
+            )
+
+        except Exception as e:
+            return ScrapeResult(
+                success=False,
+                error=str(e)
+            )
