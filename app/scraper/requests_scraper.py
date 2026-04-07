@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from app.scraper.base import ScrapeResult
 
 class RequestsScraper:
+
     def scrape(self, url: str) -> ScrapeResult:
         try:
             headers = {
@@ -12,36 +13,29 @@ class RequestsScraper:
             response = requests.get(url, headers=headers, timeout=10)
 
             if response.status_code != 200:
-                return ScrapeResult(
-                    success=False,
-                    error=f"Error HTTP {response.status_code}"
-                )
+                return ScrapeResult(success=False, error=f"HTTP {response.status_code}")
 
             soup = BeautifulSoup(response.text, "html.parser")
 
-            # 📌 PRECIO (books.toscrape)
+            # 👇 TÍTULO
+            title_element = soup.find("h1")
+            title = title_element.text.strip() if title_element else "Producto"
+
+            # 👇 PRECIO (para books.toscrape)
             price_element = soup.select_one(".price_color")
 
             if not price_element:
-                return ScrapeResult(
-                    success=False,
-                    error="No se encontró precio en la página"
-                )
+                return ScrapeResult(success=False, error="No se encontró el precio")
 
-            price = price_element.text.strip()
+            price_text = price_element.text.strip().replace("£", "")
+            price = float(price_text)
 
-            # 📌 TÍTULO
-            title_element = soup.select_one("h1")
-            title = title_element.text.strip() if title_element else "Sin título"
-
+            # 👇 ESTE ES EL RETURN CLAVE
             return ScrapeResult(
                 success=True,
                 price=price,
-                title=title
+                name=title
             )
 
         except Exception as e:
-            return ScrapeResult(
-                success=False,
-                error=str(e)
-            )
+            return ScrapeResult(success=False, error=str(e))

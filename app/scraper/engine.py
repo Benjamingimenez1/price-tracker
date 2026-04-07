@@ -17,4 +17,6 @@ def scrape_product(url: str) -> ScrapeResult:
     return ScrapeResult(
         success=False,
         error=f"No se pudo obtener el precio. Error: {result.error}",
+        name=None,
+        price=None
     )
