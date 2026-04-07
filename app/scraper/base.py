@@ -1,19 +1,14 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Optional
-
-
-@dataclass
 class ScrapeResult:
-    success: bool
-    price: Optional[float] = None
-    name: Optional[str] = None
-    currency: str = "ARS"
-    error: Optional[str] = None
-    method: str = "requests"  # "requests" | "selenium"
+    def __init__(self, success: bool, price: str = None, title: str = None, error: str = None):
+        self.success = success
+        self.price = price
+        self.title = title
+        self.error = error
 
-
-class BaseScraper(ABC):
-    @abstractmethod
-    def scrape(self, url: str) -> ScrapeResult:
-        pass
+    def to_dict(self):
+        return {
+            "success": self.success,
+            "price": self.price,
+            "title": self.title,
+            "error": self.error,
+        }
