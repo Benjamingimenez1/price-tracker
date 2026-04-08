@@ -1,5 +1,5 @@
 // ── CONFIG ────────────────────────────────────────────────
-const API = "";  // same origin; change to "http://localhost:8000" for dev with separate servers
+const API = "https://price-tracker-pro-k140.onrender.com";  // same origin; change to "http://localhost:8000" for dev with separate servers
 
 // ── STATE ─────────────────────────────────────────────────
 let token     = localStorage.getItem("pt_token") || null;
