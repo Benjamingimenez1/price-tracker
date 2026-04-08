@@ -1,3 +1,9 @@
+import logging
+from app.scraper.base import ScrapeResult
+from app.scraper.requests_scraper import RequestsScraper
+
+logger = logging.getLogger(__name__)
+
 def scrape_product(url: str) -> ScrapeResult:
     """
     Scraper simple usando requests
