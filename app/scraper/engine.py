@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 def scrape_product(url: str) -> ScrapeResult:
     """
-    Scraper simple usando requests
+    Scraper principal
     """
 
     result = RequestsScraper().scrape(url)
@@ -16,5 +16,5 @@ def scrape_product(url: str) -> ScrapeResult:
 
     return ScrapeResult(
         success=False,
-        error=f"No se pudo obtener el precio. Error: {result.error}",
+        error=f"No se pudo obtener el precio. Error: {result.error}"
     )

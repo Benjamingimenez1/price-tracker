@@ -10,6 +10,5 @@ class ScrapeResult:
             "success": self.success,
             "price": self.price,
             "name": self.name,
-            "error": self.error,
-        }: self.error,
+            "error": self.error
         }
